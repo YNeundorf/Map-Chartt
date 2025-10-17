@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wahlumfragen Deutschland</title>
+
+  <!-- Highcharts Libraries -->
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <script src="https://code.highcharts.com/maps/highmaps.js"></script>
+  <script src="https://code.highcharts.com/mapdata/countries/de/de-all.js"></script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f9fafb;
+      margin: 0;
+      padding: 0;
+    }
+    #container {
+      height: 600px;
+      margin: 20px auto;
+      max-width: 900px;
+    }
+    #chart {
+      height: 400px;
+      max-width: 600px;
+      margin: 0 auto;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Wahlumfragen Deutschland</h1>
+  <p>Klicke auf ein Bundesland, um die Umfrageergebnisse zu sehen.</p>
+
+  <div id="container"></div>
+  <div id="chart"></div>
+
+  <script>
+    // Beispielhafte Umfragedaten pro Bundesland
+    const data = {
+      "de-by": { // Bayern
+        parteien: ["CDU/CSU", "SPD", "Grüne", "AfD", "FDP"],
+        werte: [42, 15, 14, 18, 5],
+        top: "CDU/CSU"
+      },
+      "de-nw": { // Nordrhein-Westfalen
+        parteien: ["CDU", "SPD", "Grüne", "AfD", "FDP"],
+        werte: [34, 26, 17, 15, 5],
+        top: "CDU"
+      },
+      "de-sn": { // Sachsen
+        parteien: ["CDU", "AfD", "SPD", "Grüne", "FDP"],
+        werte: [28, 35, 12, 8, 4],
+        top: "AfD"
+      },
+      "de-be": { // Berlin
+        parteien: ["SPD", "CDU", "Grüne", "AfD", "Linke"],
+        werte: [22, 20, 19, 13, 10],
+        top: "SPD"
+      }
+    };
+
+    // Farbdefinitionen für Parteien
+    const parteiFarben = {
+      "CDU": "#000000",
+      "CDU/CSU": "#000000",
+      "SPD": "#E3000F",
+      "Grüne": "#1FA12E",
+      "AfD": "#009EE0",
+      "FDP": "#FFD400",
+      "Linke": "#A60062"
+    };
+
+    // Karte initialisieren
+    Highcharts.mapChart('container', {
+      chart: { map: 'countries/de/de-all' },
+      title: { text: '' },
+      tooltip: {
+        formatter: function () {
+          const info = data[this.point['hc-key']];
+          return info ? `<b>${this.point.name}</b><br/>Führend: ${info.top}` : this.point.name;
+        }
+      },
+      series: [{
+        data: Highcharts.maps['countries/de/de-all'].features.map(f => {
+          const key = f.properties['hc-key'];
+          const info = data[key];
+          return {
+            'hc-key': key,
+            value: 1,
+            color: info ? parteiFarben[info.top] : '#cccccc'
+          };
+        }),
+        name: 'Bundesländer',
+        states: { hover: { color: '#a4edba' } },
+        dataLabels: { enabled: true, format: '{point.name}' },
+        point: {
+          events: {
+            click: function () {
+              const info = data[this['hc-key']];
+              if (info) {
+                document.getElementById('chart').style.display = 'block';
+                Highcharts.chart('chart', {
+                  chart: { type: 'column' },
+                  title: { text: `Umfrageergebnisse in ${this.name}` },
+                  xAxis: { categories: info.parteien },
+                  yAxis: { title: { text: 'Prozent' }, max: 50 },
+                  series: [{
+                    name: 'Anteil (%)',
+                    data: info.werte,
+                    colorByPoint: true,
+                    colors: info.parteien.map(p => parteiFarben[p])
+                  }]
+                });
+              }
+            }
+          }
+        }
+      }]
+    });
+  </script>
+</body>
+</html>
